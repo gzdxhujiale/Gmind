@@ -1,0 +1,124 @@
+/**
+ * Toolbar styles with TDesign
+ * 
+ * Supports positioning at top, bottom, left, or right
+ * Requirements: 9.1, 9.2, 9.3, 9.4, 10.2, 10.3
+ */
+
+.toolbar {
+  background: var(--color-bg-2);
+  border-bottom: 1px solid var(--color-border-1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  flex-shrink: 0;
+  position: relative;
+  backdrop-filter: blur(8px);
+}
+
+.toolbar-bottom {
+  border-bottom: none;
+  border-top: 1px solid var(--color-border-1);
+}
+
+.toolbar-left {
+  border-bottom: none;
+  border-right: 1px solid var(--color-border-1);
+}
+
+.toolbar-right {
+  border-bottom: none;
+  border-left: 1px solid var(--color-border-1);
+}
+
+/* Position-specific styles */
+.toolbar-top,
+.toolbar-bottom {
+  width: 100%;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+}
+
+.toolbar-left,
+.toolbar-right {
+  width: auto;
+  min-width: 60px;
+  padding: 1rem 0.5rem;
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* Content layout */
+.toolbar-content-horizontal {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.toolbar-content-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+/* Window controls positioning */
+.toolbar-content-horizontal .window-controls {
+  margin-left: auto;
+  margin-right: 20px;
+  order: 999;
+}
+
+/* Toolbar sections */
+.toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Vertical layout adjustments */
+.toolbar-content-vertical .toolbar-section {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+
+
+
+
+
+
+/* Arco button customization for toolbar */
+.toolbar .arco-btn {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* Remove button focus outline */
+.toolbar .arco-btn:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.toolbar button:focus {
+  outline: none;
+}
+
+.toolbar-content-vertical .arco-btn {
+  width: 100%;
+}
+
+/* Window controls specific styling */
+.window-controls {
+  flex-shrink: 0;
+}
+
+.window-controls .arco-btn {
+  min-width: 32px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .toolbar-content-horizontal {
+    gap: 0.5rem;
+  }
+}

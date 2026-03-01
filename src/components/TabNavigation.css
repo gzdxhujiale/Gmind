@@ -1,0 +1,99 @@
+/**
+ * Styles for TabNavigation component
+ */
+
+.tab-navigation {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--color-bg-2);
+  border-bottom: 1px solid var(--color-border-1);
+}
+
+.tab-list {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  gap: 4px;
+  padding: 8px 8px 4px 8px;
+  /* Slightly less bottom padding to accommodate scrollbar */
+  flex: 1;
+  /* Smooth scrolling experience on iOS/Mac */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar to ensure it's grab-able on Windows & easy to see */
+.tab-list::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tab-list::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.tab-list::-webkit-scrollbar-thumb {
+  background: var(--color-fill-3);
+  border-radius: 4px;
+}
+
+.tab-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-4);
+}
+
+.tab-actions {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+}
+
+.tab-button {
+  padding: 8px 16px;
+  background-color: var(--color-bg-1);
+  border: 1px solid var(--color-border-2);
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  position: relative;
+  color: var(--color-text-1);
+}
+
+.tab-button:hover {
+  background-color: var(--color-fill-2);
+  border-color: var(--color-border-3);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.tab-button.active {
+  background-color: var(--color-primary-light-1);
+  color: var(--color-primary-light-4);
+  border-color: var(--color-primary-light-4);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(var(--primary-6), 0.1);
+}
+
+.tab-button.active:hover {
+  background-color: var(--color-primary-light-2);
+  transform: translateY(-2px);
+}
+
+.tab-button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.tab-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .tab-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}

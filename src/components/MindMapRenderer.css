@@ -1,0 +1,167 @@
+/**
+ * Styles for MindMapRenderer component
+ */
+
+.mind-map-renderer {
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-bg-tertiary, #fafafa);
+}
+
+.mind-map-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--color-text-secondary, #666);
+  font-size: 16px;
+}
+
+/* Node styles */
+.mind-map-node {
+  padding: 8px 14px;
+  background-color: white;
+  border: 2px solid;
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(--shadow-md, 0 2px 8px rgba(0, 0, 0, 0.1));
+  min-width: 80px;
+  max-width: 220px;
+  text-align: center;
+  transition: transform var(--transition-fast, 150ms ease),
+              box-shadow var(--transition-fast, 150ms ease),
+              filter var(--transition-fast, 150ms ease);
+  color: white;
+  will-change: transform;
+}
+
+.mind-map-node:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px) scale(1.03);
+  filter: brightness(1.1);
+}
+
+.mind-map-node.highlighted {
+  animation: pulse-highlight 1s ease-in-out infinite;
+}
+
+@keyframes pulse-highlight {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(254, 202, 87, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(254, 202, 87, 0.3);
+  }
+}
+
+/* Node content layout */
+.node-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.node-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+  word-wrap: break-word;
+  line-height: 1.4;
+  flex: 1;
+}
+
+/* Collapse button */
+.collapse-button {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast, 150ms ease);
+  flex-shrink: 0;
+}
+
+.collapse-button:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Hide React Flow handles */
+.mind-map-handle {
+  width: 8px !important;
+  height: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  opacity: 0;
+}
+
+/* React Flow edge styles */
+.react-flow__edge-path {
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-width var(--transition-fast, 150ms ease);
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 4;
+  filter: brightness(1.2);
+}
+
+/* Search panel */
+.search-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 8px 12px;
+  border-radius: var(--radius-md, 8px);
+  box-shadow: var(--shadow-md, 0 2px 8px rgba(0, 0, 0, 0.1));
+}
+
+.search-input {
+  border: 1px solid var(--color-gray-300, #d1d5db);
+  border-radius: var(--radius-sm, 4px);
+  padding: 6px 10px;
+  font-size: 13px;
+  width: 180px;
+  outline: none;
+  transition: border-color var(--transition-fast, 150ms ease);
+}
+
+.search-input:focus {
+  border-color: var(--color-primary, #667eea);
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.search-clear {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-gray-200, #e5e7eb);
+  color: var(--color-gray-600, #4b5563);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast, 150ms ease);
+}
+
+.search-clear:hover {
+  background: var(--color-gray-300, #d1d5db);
+}
+
+.search-count {
+  font-size: 12px;
+  color: var(--color-text-secondary, #6b7280);
+  white-space: nowrap;
+}

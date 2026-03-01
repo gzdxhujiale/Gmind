@@ -1,0 +1,123 @@
+/**
+ * Styles for MindMapPage component
+ */
+
+.mind-map-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.mind-map-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.no-files-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+}
+
+.no-files-message p {
+  font-size: 18px;
+  color: #666;
+  text-align: center;
+  margin: 0.5rem 0;
+}
+
+.no-files-message .help-text {
+  font-size: 14px;
+  color: #999;
+}
+
+.parse-error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  text-align: center;
+}
+
+.parse-error-message .error-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #c53030;
+  margin: 0 0 0.5rem 0;
+}
+
+.parse-error-message .error-text {
+  font-size: 16px;
+  color: #742a2a;
+  margin: 0.5rem 0;
+  max-width: 600px;
+}
+
+.parse-error-message .help-text {
+  font-size: 14px;
+  color: #999;
+  margin: 0.5rem 0;
+}
+
+.parsing-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  gap: 1rem;
+}
+
+.parsing-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .no-files-message p {
+    font-size: 16px;
+  }
+
+  .parse-error-message .error-title {
+    font-size: 16px;
+  }
+
+  .parse-error-message .error-text {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .no-files-message,
+  .parse-error-message,
+  .parsing-state {
+    padding: 16px;
+  }
+
+  .no-files-message p {
+    font-size: 14px;
+  }
+}

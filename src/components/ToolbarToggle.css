@@ -1,0 +1,53 @@
+/**
+ * ToolbarToggle styles
+ */
+
+.toolbar-toggle-button {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-primary, #667eea);
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg, 0 4px 12px rgba(0, 0, 0, 0.15));
+  z-index: var(--z-sticky, 200);
+  transition: transform var(--transition-fast, 150ms ease),
+              background var(--transition-fast, 150ms ease),
+              box-shadow var(--transition-fast, 150ms ease);
+  will-change: transform;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.toolbar-toggle-button:hover {
+  background: var(--color-primary-dark, #5a67d8);
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.toolbar-toggle-button:active {
+  transform: scale(1);
+}
+
+.toggle-icon {
+  line-height: 1;
+}
