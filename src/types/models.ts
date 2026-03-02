@@ -43,6 +43,7 @@ export interface UserPreferences {
   toolbarVisible: boolean;
   toolbarPosition: 'top' | 'bottom' | 'left' | 'right';
   viewMode?: ViewMode;
+  outlineMode?: OutlineMode;
   windowBounds?: Rectangle;
   hideOutlineTitle?: boolean;
 }
@@ -63,30 +64,36 @@ export interface Rectangle {
 export type ViewMode = 'outline' | 'mindmap';
 
 /**
+ * Outline mode type
+ */
+export type OutlineMode = 'preview' | 'edit';
+
+/**
  * Application state
  */
 export interface AppState {
   // Folder and files
   selectedFolder: string | null;
   markdownFiles: MarkdownFile[];
-  
+
   // Tab management
   activeTabIndex: number;
   tabs: TabInfo[];
-  
+
   // UI state
   toolbarVisible: boolean;
   toolbarPosition: 'top' | 'bottom' | 'left' | 'right';
   viewMode: ViewMode;
+  outlineMode: OutlineMode;
   hideOutlineTitle: boolean;
-  
+
   // Popup state
   popupVisible: boolean;
   popupContent: { heading: string; content: string } | null;
-  
+
   // Loading state
   isLoading: boolean;
-  
+
   // Settings page
   settingsVisible: boolean;
 }
@@ -101,6 +108,7 @@ export interface AppActions {
   toggleToolbar(): void;
   setToolbarPosition(position: 'top' | 'bottom' | 'left' | 'right'): void;
   setViewMode(mode: ViewMode): void;
+  setOutlineMode(mode: OutlineMode): void;
   showPopup(heading: string, content: string): void;
   hidePopup(): void;
   setLoading(isLoading: boolean): void;

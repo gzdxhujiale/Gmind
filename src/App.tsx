@@ -13,8 +13,6 @@ import { useAppStore } from './store/useAppStore';
 import { storageService } from './services/StorageService';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useWindowResize } from './hooks/useWindowResize';
-import { IPC_CHANNELS } from './types/ipc';
-import type { ReadMarkdownFilesResponse, FileChangedEvent } from './types/ipc';
 import './App.css';
 
 function App() {
@@ -63,21 +61,22 @@ function App() {
         try {
           setLoading(true);
           // Validate folder path by attempting to read markdown files (Requirement 1.5)
-          const response: ReadMarkdownFilesResponse = await window.ipcRenderer.invoke(
-            IPC_CHANNELS.READ_MARKDOWN_FILES,
-            { folderPath: savedFolder }
-          );
+          const { invoke } = await import('@tauri-apps/api/core');
+          try {
+            const files = await invoke('read_markdown_files', { folderPath: savedFolder });
 
-          if (response.error) {
+            // Start watching again
+            await invoke('watch_folder', { folderPath: savedFolder });
+
+            // Valid folder path - load files and show mind map page (Requirement 10.5)
+            setSelectedFolder(savedFolder);
+            loadMarkdownFiles(files as any[]);
+          } catch (error) {
             // Invalid folder path - clear it and show home page (Requirement 1.5)
-            console.warn('Saved folder path is invalid:', response.error);
+            console.warn('Saved folder path is invalid:', error);
             storageService.saveFolderPath('');
             setSelectedFolder('');
             setLoading(false);
-          } else {
-            // Valid folder path - load files and show mind map page (Requirement 10.5)
-            setSelectedFolder(savedFolder);
-            loadMarkdownFiles(response.files);
           }
         } catch (error) {
           // Error validating folder - clear it and show home page (Requirement 1.5)
@@ -98,38 +97,33 @@ function App() {
   useEffect(() => {
     if (!selectedFolder) return;
 
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let unlisten: () => void;
 
-    // Create listener function
-    const handleFileChange = async (_event: any, _message: FileChangedEvent) => {
-      // Debounce the reload to prevent spamming on bulk changes
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(async () => {
-        try {
-          const response: ReadMarkdownFilesResponse = await window.ipcRenderer.invoke(
-            IPC_CHANNELS.READ_MARKDOWN_FILES,
-            { folderPath: selectedFolder }
-          );
+    const setupListener = async () => {
+      const { listen } = await import('@tauri-apps/api/event');
+      const { invoke } = await import('@tauri-apps/api/core');
 
-          if (!response.error) {
+      unlisten = await listen('file-changed', async () => {
+        // Debounce the reload to prevent spamming on bulk changes
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(async () => {
+          try {
+            const files = await invoke('read_markdown_files', { folderPath: selectedFolder });
             // Reload files without dropping user's currently focused tab index
-            loadMarkdownFiles(response.files);
+            loadMarkdownFiles(files as any[]);
+          } catch (error) {
+            console.error('Auto-sync failed:', error);
           }
-        } catch (error) {
-          console.error('Auto-sync failed:', error);
-        }
-      }, 500); // 500ms debounce
+        }, 500); // 500ms debounce
+      });
     };
 
-    window.ipcRenderer.on(IPC_CHANNELS.FILE_CHANGED, handleFileChange);
+    setupListener();
 
     return () => {
       clearTimeout(timeoutId);
-      // Our preload type for `on` returns `this` (which is `typeof ipcRenderer`),
-      // so we use the `off` method instead of treating `cleanup` as a function.
-      if (window.ipcRenderer.off) {
-        window.ipcRenderer.off(IPC_CHANNELS.FILE_CHANGED, handleFileChange);
-      }
+      if (unlisten) unlisten();
     };
   }, [selectedFolder, loadMarkdownFiles]);
 

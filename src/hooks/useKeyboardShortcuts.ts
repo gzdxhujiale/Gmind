@@ -5,7 +5,6 @@
  */
 
 import { useEffect } from 'react';
-import { IPC_CHANNELS, KeyboardShortcutEvent } from '../types/ipc';
 import { useAppStore } from '../store/useAppStore';
 
 /**
@@ -19,72 +18,74 @@ import { useAppStore } from '../store/useAppStore';
  */
 export function useKeyboardShortcuts() {
   useEffect(() => {
-    // Check if we're in Electron environment
-    if (!window.ipcRenderer) {
-      console.warn('IPC not available - not running in Electron');
-      return;
-    }
+    // We replace the Electron IPC shortcuts with standard web KeyboardEvent listeners
+    // Alternatively, this could be done via tauri-plugin-global-shortcut if background listening is needed
+    // But since these are app-specific (tabs, toolbar), window listener is sufficient.
 
-    /**
-     * Handle keyboard shortcut events from main process
-     */
-    const handleKeyboardShortcut = (_event: Electron.IpcRendererEvent, data: KeyboardShortcutEvent) => {
-      console.log('Keyboard shortcut received:', data);
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      // Check for Ctrl or Cmd key
+      if (!e.ctrlKey && !e.metaKey) return;
 
-      if (data.action === 'tab-switch' && data.tabIndex !== undefined) {
-        // Tab switching: Ctrl+1 to Ctrl+9
-        // Convert 1-based index to 0-based
-        const tabIndex = data.tabIndex - 1;
+      const key = e.key.toLowerCase();
+      const num = parseInt(key);
 
-        // Get current tabs from store
+      // Hide to tray: Ctrl+0
+      if (key === '0') {
+        e.preventDefault();
+        console.log('Hide to tray triggered');
+        const { Window } = await import('@tauri-apps/api/window');
+        Window.getCurrent().hide().catch(console.error);
+        return;
+      }
+
+      // Tab switching: Ctrl+1 to Ctrl+9
+      if (num >= 1 && num <= 9) {
+        e.preventDefault();
+        const tabIndex = num - 1;
         const tabs = useAppStore.getState().tabs;
         const setActiveTab = useAppStore.getState().setActiveTab;
 
-        // Requirement 6.1: Switch to corresponding tab by index
-        // Requirement 6.2: Ignore input for non-existent tabs (handled by setActiveTab)
         if (tabIndex >= 0 && tabIndex < tabs.length) {
           setActiveTab(tabIndex);
-          console.log(`Switched to tab ${data.tabIndex} (index ${tabIndex})`);
-        } else {
-          console.log(`Tab ${data.tabIndex} does not exist (only ${tabs.length} tabs available)`);
+          console.log(`Switched to tab ${num} (index ${tabIndex})`);
         }
-      } else if (data.action === 'hide-to-tray') {
-        // Hide to tray: Ctrl+0
-        // Requirement 7.1: Minimize to system tray
-        console.log('Hide to tray triggered');
-        
-        // The main process already handles hiding via the callback
-        // But we also invoke it here to ensure it works
-        window.ipcRenderer.invoke(IPC_CHANNELS.HIDE_WINDOW).catch((error) => {
-          console.error('Error hiding window:', error);
-        });
-      } else if (data.action === 'toolbar-position' && data.position) {
-        // Toolbar position: Ctrl+Arrow keys
+        return;
+      }
+
+      // Toolbar position: Ctrl+Arrow keys
+      if (key.startsWith('arrow')) {
+        e.preventDefault();
         const setToolbarPosition = useAppStore.getState().setToolbarPosition;
-        setToolbarPosition(data.position);
-        console.log(`Toolbar position changed to ${data.position}`);
-      } else if (data.action === 'toolbar-visibility' && data.visibility) {
-        // Toolbar visibility: Ctrl+- (hide) or Ctrl++ (show)
-        const { toolbarVisible, toggleToolbar } = useAppStore.getState();
-        
-        if (data.visibility === 'hide' && toolbarVisible) {
-          toggleToolbar();
-          console.log('Toolbar hidden');
-        } else if (data.visibility === 'show' && !toolbarVisible) {
-          toggleToolbar();
-          console.log('Toolbar shown');
+
+        switch (key) {
+          case 'arrowup': setToolbarPosition('top'); break;
+          case 'arrowdown': setToolbarPosition('bottom'); break;
+          case 'arrowleft': setToolbarPosition('left'); break;
+          case 'arrowright': setToolbarPosition('right'); break;
         }
+        return;
+      }
+
+      // Toolbar visibility: Ctrl+- (hide) or Ctrl+= (show)
+      if (key === '-' || key === '_' || key === '=' || key === '+') {
+        e.preventDefault();
+        const { toolbarVisible, toggleToolbar } = useAppStore.getState();
+
+        const shouldHide = key === '-' || key === '_';
+        if ((shouldHide && toolbarVisible) || (!shouldHide && !toolbarVisible)) {
+          toggleToolbar();
+        }
+        return;
       }
     };
 
-    // Register the listener
-    window.ipcRenderer.on(IPC_CHANNELS.KEYBOARD_SHORTCUT, handleKeyboardShortcut);
+    window.addEventListener('keydown', handleKeyDown);
 
     console.log('Keyboard shortcuts listener registered');
 
     // Cleanup: Remove listener on unmount
     return () => {
-      window.ipcRenderer.off(IPC_CHANNELS.KEYBOARD_SHORTCUT, handleKeyboardShortcut);
+      window.removeEventListener('keydown', handleKeyDown);
       console.log('Keyboard shortcuts listener unregistered');
     };
   }, []); // Only register once on mount

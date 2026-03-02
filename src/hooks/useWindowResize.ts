@@ -1,16 +1,6 @@
-/**
- * useWindowResize hook
- * Listens for window resize events from the main process and handles:
- * - Saving window bounds to storage
- * - Triggering mind map reflow
- * 
- * Requirements: 8.1, 8.2, 8.4
- */
-
 import { useEffect, useState } from 'react';
-import { IPC_CHANNELS, WindowResizedEvent } from '../types/ipc';
-import { storageService } from '../services/StorageService';
 import { Rectangle } from '../types/models';
+import { storageService } from '../services/StorageService';
 
 /**
  * Hook to handle window resize events with debouncing
@@ -21,34 +11,41 @@ export const useWindowResize = () => {
   const [windowBounds, setWindowBounds] = useState<Rectangle | null>(null);
 
   useEffect(() => {
-    // Check if we're in Electron environment
-    if (!window.ipcRenderer) {
-      return;
-    }
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let unlisten: () => void;
 
-    let debounceTimer: NodeJS.Timeout | null = null;
+    const setupListener = async () => {
+      const { Window } = await import('@tauri-apps/api/window');
+      const appWindow = Window.getCurrent();
 
-    // Handler for window resize events with debouncing
-    const handleWindowResize = (_event: any, data: WindowResizedEvent) => {
-      const { bounds } = data;
-      
-      // Clear previous timer
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
+      // Listen for window resize events
+      unlisten = await appWindow.onResized(({ payload: size }) => {
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
 
-      // Debounce the state update and storage save (300ms delay)
-      debounceTimer = setTimeout(() => {
-        // Update local state (triggers reflow in components that use this)
-        setWindowBounds(bounds);
-        
-        // Save bounds to storage (Requirement 8.4)
-        storageService.saveWindowBounds(bounds);
-      }, 300);
+        debounceTimer = setTimeout(async () => {
+          try {
+            const pos = await appWindow.innerPosition();
+            const bounds = {
+              width: size.width,
+              height: size.height,
+              x: pos.x,
+              y: pos.y
+            };
+
+            setWindowBounds(bounds);
+            // Storage sync is handled automatically by tauri-plugin-window-state, 
+            // but we can still save to our own storage if needed
+            storageService.saveWindowBounds(bounds);
+          } catch (e) {
+            console.error("Failed to get window bounds", e);
+          }
+        }, 300);
+      });
     };
 
-    // Listen for window resize events from main process
-    window.ipcRenderer.on(IPC_CHANNELS.WINDOW_RESIZED, handleWindowResize);
+    setupListener();
 
     // Load initial window bounds
     const savedBounds = storageService.getWindowBounds();
@@ -61,7 +58,9 @@ export const useWindowResize = () => {
       if (debounceTimer) {
         clearTimeout(debounceTimer);
       }
-      window.ipcRenderer.off(IPC_CHANNELS.WINDOW_RESIZED, handleWindowResize);
+      if (unlisten) {
+        unlisten();
+      }
     };
   }, []);
 

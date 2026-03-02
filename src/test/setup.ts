@@ -11,8 +11,10 @@ afterEach(() => {
 })
 
 // Mock ResizeObserver for React Flow
-global.ResizeObserver = class ResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
+import { vi } from 'vitest'
+
+vi.stubGlobal('ResizeObserver', class ResizeObserver {
+  observe() { }
+  unobserve() { }
+  disconnect() { }
+});

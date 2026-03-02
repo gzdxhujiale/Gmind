@@ -22,14 +22,16 @@ vi.mock('../services/StorageService', () => ({
   },
 }));
 
-// 模拟 window.ipcRenderer
+// 模拟 Tauri API
 const mockInvoke = vi.fn();
-global.window.ipcRenderer = {
-  invoke: mockInvoke,
-  on: vi.fn(),
-  off: vi.fn(),
-  send: vi.fn(),
-} as any;
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: mockInvoke
+}));
+
+const mockOpen = vi.fn();
+vi.mock('@tauri-apps/plugin-dialog', () => ({
+  open: mockOpen
+}));
 
 describe('HomePage', () => {
   const mockSetSelectedFolder = vi.fn();
@@ -37,7 +39,7 @@ describe('HomePage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // 设置默认的 store mock
     vi.mocked(useAppStore).mockReturnValue({
       selectedFolder: null,
@@ -62,14 +64,14 @@ describe('HomePage', () => {
 
   it('should render the folder selection button', () => {
     render(<HomePage />);
-    
+
     const button = screen.getByRole('button', { name: /select folder/i });
     expect(button).toBeDefined();
   });
 
   it('should display welcome message when no folder is selected', () => {
     render(<HomePage />);
-    
+
     const message = screen.getByText(/select a folder containing markdown files/i);
     expect(message).toBeDefined();
   });
@@ -97,7 +99,7 @@ describe('HomePage', () => {
     });
 
     render(<HomePage />);
-    
+
     expect(screen.getByText('Current Folder:')).toBeDefined();
     expect(screen.getByText('/path/to/folder')).toBeDefined();
   });
@@ -125,19 +127,18 @@ describe('HomePage', () => {
     });
 
     render(<HomePage />);
-    
+
     const button = screen.getByRole('button', { name: /change folder/i });
     expect(button).toBeDefined();
   });
 
   it('should call IPC and update state when folder is selected', async () => {
     // 模拟 IPC 响应
-    mockInvoke
-      .mockResolvedValueOnce({ folderPath: '/selected/folder' }) // SELECT_FOLDER
-      .mockResolvedValueOnce({ files: [], error: undefined }); // READ_MARKDOWN_FILES
+    mockOpen.mockResolvedValueOnce('/selected/folder'); // open
+    mockInvoke.mockResolvedValueOnce([]); // read_markdown_files
 
     render(<HomePage />);
-    
+
     const button = screen.getByRole('button', { name: /select folder/i });
     fireEvent.click(button);
 
@@ -161,13 +162,12 @@ describe('HomePage', () => {
       { name: 'file2.md', path: '/selected/folder/file2.md', content: '# Test 2' },
     ];
 
-    // 模拟 IPC 响应
-    mockInvoke
-      .mockResolvedValueOnce({ folderPath: '/selected/folder' }) // SELECT_FOLDER
-      .mockResolvedValueOnce({ files: mockFiles, error: undefined }); // READ_MARKDOWN_FILES
+    // 模拟 Tauri 响应
+    mockOpen.mockResolvedValueOnce('/selected/folder'); // open
+    mockInvoke.mockResolvedValueOnce(mockFiles); // read_markdown_files
 
     render(<HomePage />);
-    
+
     const button = screen.getByRole('button', { name: /select folder/i });
     fireEvent.click(button);
 
@@ -178,17 +178,17 @@ describe('HomePage', () => {
   });
 
   it('should handle folder selection cancellation', async () => {
-    // 模拟 IPC 响应为 null (用户取消)
-    mockInvoke.mockResolvedValueOnce({ folderPath: null });
+    // 模拟 Tauri 响应为 null (用户取消)
+    mockOpen.mockResolvedValueOnce(null);
 
     render(<HomePage />);
-    
+
     const button = screen.getByRole('button', { name: /select folder/i });
     fireEvent.click(button);
 
     // Wait for async operations
     await vi.waitFor(() => {
-      expect(mockInvoke).toHaveBeenCalledWith('select-folder');
+      expect(mockOpen).toHaveBeenCalled();
     });
 
     // 如果取消则不应更新状态
@@ -197,15 +197,14 @@ describe('HomePage', () => {
   });
 
   it('should handle errors when reading markdown files', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
-    // 模拟 IPC 响应
-    mockInvoke
-      .mockResolvedValueOnce({ folderPath: '/selected/folder' }) // SELECT_FOLDER
-      .mockResolvedValueOnce({ files: [], error: 'Failed to read files' }); // READ_MARKDOWN_FILES
+    // 模拟 Tauri 响应
+    mockOpen.mockResolvedValueOnce('/selected/folder'); // open
+    mockInvoke.mockRejectedValueOnce('Failed to read files'); // read_markdown_files
 
     render(<HomePage />);
-    
+
     const button = screen.getByRole('button', { name: /select folder/i });
     fireEvent.click(button);
 

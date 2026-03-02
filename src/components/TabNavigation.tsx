@@ -49,7 +49,7 @@ export const TabNavigation: React.FC = React.memo(() => {
   }
 
   return (
-    <div className="tab-navigation" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
+    <div className="tab-navigation" data-tauri-drag-region>
       <div className="tab-list" ref={scrollContainerRef}>
         {tabs.map((tab, index) => (
           <button
@@ -58,13 +58,12 @@ export const TabNavigation: React.FC = React.memo(() => {
             onClick={() => setActiveTab(index)}
             aria-selected={tab.isActive}
             role="tab"
-            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
           >
             {tab.filename}
           </button>
         ))}
       </div>
-      <div className="tab-actions" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+      <div className="tab-actions">
         <Tooltip content="设置" position="bottom">
           <Button
             shape="square"

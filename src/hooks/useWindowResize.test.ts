@@ -5,28 +5,29 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { storageService } from '../services/StorageService';
 
-describe('useWindowResize', () => {
-  let mockIpcRenderer: any;
+// Mock Tauri window API
+const mockOnResized = vi.fn();
+const mockInnerPosition = vi.fn().mockResolvedValue({ x: 0, y: 0 });
 
+vi.mock('@tauri-apps/api/window', () => ({
+  Window: {
+    getCurrent: () => ({
+      onResized: mockOnResized,
+      innerPosition: mockInnerPosition
+    })
+  }
+}));
+
+describe('useWindowResize', () => {
   beforeEach(() => {
     // Clear storage before each test
     storageService.clearAll();
-    
-    // Mock ipcRenderer
-    mockIpcRenderer = {
-      on: vi.fn(),
-      off: vi.fn(),
-    };
-    
-    (global as any).window = {
-      ...global.window,
-      ipcRenderer: mockIpcRenderer,
-    };
+    mockOnResized.mockClear();
+    mockInnerPosition.mockClear();
   });
 
   afterEach(() => {
     // Clean up
-    delete (global as any).window.ipcRenderer;
   });
 
   it('should save window bounds to storage when provided', () => {

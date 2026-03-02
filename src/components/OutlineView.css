@@ -101,6 +101,16 @@
   color: #667eea;
 }
 
+.outline-actions {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  padding-left: 8px;
+}
+
+.outline-header:hover .outline-actions {
+  opacity: 1;
+}
+
 /* Level-based indentation and colors */
 .outline-level-1 > .outline-header { padding-left: 12px; }
 .outline-level-2 > .outline-header { padding-left: 32px; }

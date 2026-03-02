@@ -10,8 +10,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { storageService } from '../services/StorageService';
-import { IPC_CHANNELS } from '../types/ipc';
-import type { SelectFolderResponse, ReadMarkdownFilesResponse } from '../types/ipc';
 import './HomePage.css';
 
 export const HomePage = React.memo(() => {
@@ -29,38 +27,47 @@ export const HomePage = React.memo(() => {
    */
   const handleSelectFolder = async () => {
     try {
-      // 清除之前的错误消息
       setErrorMessage('');
 
-      // 调用 IPC 显示文件夹选择对话框
-      const response: SelectFolderResponse = await window.ipcRenderer.invoke(
-        IPC_CHANNELS.SELECT_FOLDER
-      );
+      // Dynamic import for Tauri to avoid SSR issues if ever applicable
+      const { invoke } = await import('@tauri-apps/api/core');
+      const { open } = await import('@tauri-apps/plugin-dialog');
 
-      if (response.folderPath) {
-        // 更新状态
-        setSelectedFolder(response.folderPath);
-        
-        // 持久化到存储 (需求 1.2)
-        storageService.saveFolderPath(response.folderPath);
+      // Use Tauri dialog plugin to select a folder
+      const folderPath = await open({
+        directory: true,
+        multiple: false,
+        title: 'Select Markdown Folder',
+      });
 
-        // 读取文件时显示加载状态
+      // User cancelled
+      if (folderPath === null) {
+        // Stop watching if user cancelled (to match original behavior)
+        await invoke('watch_folder', { folderPath: null });
+        return;
+      }
+
+      const selectedPath = Array.isArray(folderPath) ? folderPath[0] : folderPath;
+
+      if (selectedPath) {
+        setSelectedFolder(selectedPath);
+        storageService.saveFolderPath(selectedPath);
         setLoading(true);
 
-        // 从选定的文件夹加载 markdown 文件
-        const filesResponse: ReadMarkdownFilesResponse = await window.ipcRenderer.invoke(
-          IPC_CHANNELS.READ_MARKDOWN_FILES,
-          { folderPath: response.folderPath }
-        );
+        try {
+          // Read markdown files using Tauri command
+          const files = await invoke('read_markdown_files', { folderPath: selectedPath });
 
-        if (filesResponse.error) {
-          // 显示用户友好的错误消息 (需求 1.5, 2.5)
-          console.error('Error reading markdown files:', filesResponse.error);
-          setErrorMessage(filesResponse.error);
+          // Start watching folder
+          await invoke('watch_folder', { folderPath: selectedPath });
+
+          loadMarkdownFiles(files as any[]);
+        } catch (err: any) {
+          console.error('Error reading markdown files:', err);
+          setErrorMessage(err as string);
           loadMarkdownFiles([]);
+        } finally {
           setLoading(false);
-        } else {
-          loadMarkdownFiles(filesResponse.files);
         }
       }
     } catch (error) {
@@ -76,7 +83,7 @@ export const HomePage = React.memo(() => {
     <div className="home-page">
       <div className="home-content">
         <h1>Markdown Mind Map Viewer</h1>
-        
+
         {/* 如果可用，显示当前文件夹路径 (需求 10.1) */}
         {selectedFolder && (
           <div className="current-folder">
@@ -101,7 +108,7 @@ export const HomePage = React.memo(() => {
         )}
 
         {/* 文件夹选择按钮 (需求 1.1, 10.4) */}
-        <button 
+        <button
           className="select-folder-button"
           onClick={handleSelectFolder}
         >

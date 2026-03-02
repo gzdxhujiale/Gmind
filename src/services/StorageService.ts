@@ -25,6 +25,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   toolbarVisible: true,
   toolbarPosition: 'top',
   hideOutlineTitle: true,
+  outlineMode: 'preview',
 };
 
 /**
@@ -80,19 +81,24 @@ export class StorageService {
       if (!stored) {
         return DEFAULT_PREFERENCES;
       }
-      
+
       const parsed = JSON.parse(stored) as UserPreferences;
-      
+
       // Validate the parsed preferences
       if (typeof parsed.toolbarVisible !== 'boolean') {
         return DEFAULT_PREFERENCES;
       }
-      
+
       const validPositions = ['top', 'bottom', 'left', 'right'];
       if (!validPositions.includes(parsed.toolbarPosition)) {
         return DEFAULT_PREFERENCES;
       }
-      
+
+      const validOutlineModes = ['preview', 'edit'];
+      if (parsed.outlineMode && !validOutlineModes.includes(parsed.outlineMode)) {
+        return DEFAULT_PREFERENCES;
+      }
+
       return parsed;
     } catch (error) {
       console.error('Failed to get preferences:', error);
@@ -123,9 +129,9 @@ export class StorageService {
       if (!stored) {
         return null;
       }
-      
+
       const parsed = JSON.parse(stored) as Rectangle;
-      
+
       // Validate the parsed bounds
       if (
         typeof parsed.x !== 'number' ||
@@ -135,7 +141,7 @@ export class StorageService {
       ) {
         return null;
       }
-      
+
       return parsed;
     } catch (error) {
       console.error('Failed to get window bounds:', error);

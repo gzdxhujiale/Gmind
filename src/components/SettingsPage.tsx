@@ -13,8 +13,7 @@ import {
 } from '@arco-design/web-react/icon';
 import { useAppStore } from '../store/useAppStore';
 import { storageService } from '../services/StorageService';
-import { IPC_CHANNELS } from '../types/ipc';
-import { ViewMode } from '../types/models';
+import { ViewMode, OutlineMode } from '../types/models';
 import './SettingsPage.css';
 
 export const SettingsPage: React.FC = React.memo(() => {
@@ -33,6 +32,8 @@ export const SettingsPage: React.FC = React.memo(() => {
     setLoading,
     hideOutlineTitle,
     setHideOutlineTitle,
+    outlineMode,
+    setOutlineMode,
   } = useAppStore();
 
   if (!settingsVisible) {
@@ -64,24 +65,36 @@ export const SettingsPage: React.FC = React.memo(() => {
 
   const handleSelectFolder = async () => {
     try {
-      const response = await window.ipcRenderer.invoke(IPC_CHANNELS.SELECT_FOLDER);
+      const { invoke } = await import('@tauri-apps/api/core');
+      const { open } = await import('@tauri-apps/plugin-dialog');
 
-      if (response.folderPath) {
-        setSelectedFolder(response.folderPath);
-        storageService.saveFolderPath(response.folderPath);
+      const folderPath = await open({
+        directory: true,
+        multiple: false,
+        title: 'Select Markdown Folder',
+      });
+
+      if (folderPath === null) {
+        return;
+      }
+
+      const selectedPath = Array.isArray(folderPath) ? folderPath[0] : folderPath;
+
+      if (selectedPath) {
+        setSelectedFolder(selectedPath);
+        storageService.saveFolderPath(selectedPath);
         setLoading(true);
 
-        const filesResponse = await window.ipcRenderer.invoke(
-          IPC_CHANNELS.READ_MARKDOWN_FILES,
-          { folderPath: response.folderPath }
-        );
+        try {
+          const files = await invoke('read_markdown_files', { folderPath: selectedPath });
+          await invoke('watch_folder', { folderPath: selectedPath });
 
-        if (filesResponse.error) {
-          console.error('Error reading markdown files:', filesResponse.error);
+          loadMarkdownFiles(files as any[]);
+        } catch (error: any) {
+          console.error('Error reading markdown files:', error);
           loadMarkdownFiles([]);
+        } finally {
           setLoading(false);
-        } else {
-          loadMarkdownFiles(filesResponse.files);
         }
       }
     } catch (error) {
@@ -131,6 +144,20 @@ export const SettingsPage: React.FC = React.memo(() => {
         {/* 大纲视图设置 */}
         <div className="settings-section">
           <h3>大纲视图</h3>
+          <div className="settings-option">
+            <span style={{ marginRight: '12px' }}>模式</span>
+            <RadioGroup
+              value={outlineMode}
+              onChange={(value) => setOutlineMode(value as OutlineMode)}
+            >
+              <Radio value="preview">
+                <span className="radio-label">预览模式</span>
+              </Radio>
+              <Radio value="edit">
+                <span className="radio-label">编辑模式</span>
+              </Radio>
+            </RadioGroup>
+          </div>
           <div className="settings-option">
             <div className="toolbar-visibility-row">
               <span>隐藏文件名标题</span>

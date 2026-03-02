@@ -19,24 +19,25 @@ const initialState: AppState = {
   // Folder and files
   selectedFolder: null,
   markdownFiles: [],
-  
+
   // Tab management
   activeTabIndex: 0,
   tabs: [],
-  
+
   // UI state
   toolbarVisible: true,
   toolbarPosition: 'top',
   viewMode: 'outline',
+  outlineMode: 'preview',
   hideOutlineTitle: true,
-  
+
   // Popup state
   popupVisible: false,
   popupContent: null,
-  
+
   // Loading state
   isLoading: false,
-  
+
   // Settings page
   settingsVisible: false,
 };
@@ -125,13 +126,13 @@ export const useAppStore = create<AppStore>((set) => ({
   toggleToolbar: () => {
     set((state) => {
       const newVisibility = !state.toolbarVisible;
-      
+
       // Persist preferences (Requirement 9.5)
       storageService.savePreferences({
         toolbarVisible: newVisibility,
         toolbarPosition: state.toolbarPosition,
       });
-      
+
       return { toolbarVisible: newVisibility };
     });
   },
@@ -148,7 +149,7 @@ export const useAppStore = create<AppStore>((set) => ({
         toolbarVisible: state.toolbarVisible,
         toolbarPosition: position,
       });
-      
+
       return { toolbarPosition: position };
     });
   },
@@ -185,6 +186,19 @@ export const useAppStore = create<AppStore>((set) => ({
     storageService.savePreferences({
       ...preferences,
       viewMode: mode,
+    });
+  },
+
+  /**
+   * Set outline mode (preview or edit)
+   */
+  setOutlineMode: (mode) => {
+    set({ outlineMode: mode });
+    // Persist preference
+    const preferences = storageService.getPreferences();
+    storageService.savePreferences({
+      ...preferences,
+      outlineMode: mode,
     });
   },
 
